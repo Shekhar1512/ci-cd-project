@@ -4,15 +4,18 @@ pipeline {
 
     stages {
 
-        stage('Clone') {
+        stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Shekhar1512/ci-cd-project.git'
+                checkout scm
             }
         }
 
-        stage('Build Image') {
+        stage('Build Docker Image') {
             steps {
-                sh 'docker build -t my-static-image .'
+                sh '''
+                docker build --no-cache \
+                -t my-static-image .
+                '''
             }
         }
 
@@ -20,12 +23,21 @@ pipeline {
             steps {
                 sh '''
                 docker stop my-static-container || true
+
                 docker rm my-static-container || true
 
                 docker run -d \
                 --name my-static-container \
                 -p 80:80 \
                 my-static-image
+                '''
+            }
+        }
+
+        stage('Cleanup') {
+            steps {
+                sh '''
+                docker image prune -f
                 '''
             }
         }
